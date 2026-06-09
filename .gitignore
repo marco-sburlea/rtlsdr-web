@@ -1,0 +1,19 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# SDR captures
+captures/
+bugreports/
+*.iq
+*.csv
+
+# Environment
+.env
+*.env
+
+# Editor
+.vscode/
+*.swp
