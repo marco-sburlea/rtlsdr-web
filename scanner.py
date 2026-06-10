@@ -23,6 +23,11 @@ def scan_band_continuous(start_hz, stop_hz, bin_size, gain, threshold_db, captur
     logger.info(f"Band scan started: {start_hz}-{stop_hz} Hz, threshold={threshold_db} dB")
 
     while scan_active:
+        if not capture_lock.acquire(blocking=False):
+            logger.info("Scan delayed: device busy with IQ capture")
+            time.sleep(1)
+            continue
+
         tmp_file = f"/tmp/rtlsdr_scan_{int(time.time())}.csv"
 
         cmd = [
@@ -34,9 +39,16 @@ def scan_band_continuous(start_hz, stop_hz, bin_size, gain, threshold_db, captur
             cmd += ["-g", str(int(float(gain)))]
         cmd.append(tmp_file)
 
-        code, out, err = run_command(cmd, timeout=15)
+        try:
+            code, out, err = run_command(cmd, timeout=15)
+        finally:
+            capture_lock.release()
 
         if not scan_active:
+            try:
+                os.remove(tmp_file)
+            except Exception:
+                pass
             break
 
         if code == 0 and os.path.exists(tmp_file):
@@ -82,6 +94,8 @@ def scan_band_continuous(start_hz, stop_hz, bin_size, gain, threshold_db, captur
                                 args=(pt['freq_hz'], capture_duration, gain, socketio),
                                 daemon=True
                             ).start()
+                            time.sleep(0.1)
+                        
                         break
 
             try:
