@@ -2,6 +2,17 @@
 
 A web-based control panel for RTL-SDR devices, built with Flask and SocketIO.
 
+## Screenshots
+
+**Band scan with threshold-triggered capture**
+![Band Scan](docs/screenshots/band_scan_dashboard.png)
+
+**IQ capture**
+![IQ Capture](docs/screenshots/iq_capture_dashboard.png)
+
+**Scheduled captures**
+![Scheduler](docs/screenshots/scheduled_capture_dashboard.png)
+
 ## Features
 
 - **IQ Capture** — record raw IQ samples at any frequency
