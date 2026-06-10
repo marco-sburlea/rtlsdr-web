@@ -22,7 +22,7 @@ def validate_gain(gain):
 
 @bp.route('/api/capture/iq', methods=['POST'])
 def capture_iq():
-    from app import socketio as sio
+    from extensions import socketio as sio
     data = request.json
     freq = float(data.get('frequency', 100e6))
     rate = float(data.get('sample_rate', 2_048_000))
@@ -43,7 +43,7 @@ def capture_iq():
 
 @bp.route('/api/capture/sweep', methods=['POST'])
 def capture_sweep():
-    from app import socketio as sio
+    from extensions import socketio as sio
     data = request.json
     start = float(data.get('start_freq', 87.5e6))
     stop = float(data.get('stop_freq', 108e6))

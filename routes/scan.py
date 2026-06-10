@@ -22,7 +22,7 @@ def start_scan():
     cap_duration = float(data.get('capture_duration', 5))
     cooldown = float(data.get('cooldown_sec', 30))
 
-    from app import socketio
+    from extensions import socketio
     scanner.scan_active = True
     thread = threading.Thread(
         target=scan_band_continuous,

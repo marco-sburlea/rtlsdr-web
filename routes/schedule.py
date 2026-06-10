@@ -13,7 +13,7 @@ def add_schedule():
     cron_expr = data.get('cron', '0 * * * *')
     params = data.get('params', {})
 
-    from app import socketio
+    from extensions import socketio
     try:
         job_id, next_run = add_job(capture_type, cron_expr, params, socketio)
         return jsonify({"status": "added", "job_id": job_id, "next_run": next_run})
