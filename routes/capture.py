@@ -21,21 +21,44 @@ def validate_gain(gain):
         return None, "Invalid gain value"
 
 
-@bp.route('/api/capture/iq', methods = ['POST'])
+@bp.route('/api/capture/iq', methods=['POST'])
 def capture_iq():
     data = request.json
     freq = float(data.get('frequency', 100e6))
-    rate = float(data.get('samples rate', 2_048_000))
+    rate = float(data.get('sample_rate', 2_048_000))
     duration = float(data.get('duration', 5))
     label = data.get('label', '')
-    gain, err = validate_fain(data.get('gain', 'auto'))
+    gain, err = validate_gain(data.get('gain', 'auto'))
     if err:
         return jsonify({"error": err}), 400
 
     from app import socketio
     def run():
         socketio.emit('capture_started', {'type': 'iq'})
-        succes, meta = do_iq_capture(freq, rate, duration, gain, label)
+        success, meta = do_iq_capture(freq, rate, duration, gain, label)
         socketio.emit('capture_done', meta)
 
-    threadi
+    threading.Thread(target=run, daemon=True).start()
+    return jsonify({"status": "started"})
+
+
+@bp.route('/api/capture/sweep', methods=['POST'])
+def capture_sweep():
+    data = request.json
+    start = float(data.get('start_freq', 87.5e6))
+    stop = float(data.get('stop_freq', 108e6))
+    bin_size = float(data.get('bin_size', 1e6))
+    duration_sec = float(data.get('duration_sec', 0))
+    label = data.get('label', '')
+    gain, err = validate_gain(data.get('gain', 'auto'))
+    if err:
+        return jsonify({"error": err}), 400
+
+    from app import socketio
+    def run():
+        socketio.emit('capture_started', {'type': 'sweep'})
+        success, meta = do_sweep(start, stop, bin_size, gain, label, duration_sec)
+        socketio.emit('capture_done', meta)
+
+    threading.Thread(target=run, daemon=True).start()
+    return jsonify({"status": "started"})
