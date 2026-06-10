@@ -17,7 +17,7 @@ def do_iq_capture(freq_hz, sample_rate, duration_sec, gain='auto', label=''):
         logger.warning("do_iq_capture: device busy, capture skipped")
         return False, {"error": "RTL-SDR busy", "success": False}
     try:
-        ts = datetime.datetime.now().strftime(""%d-%m-%Y_%H-%M-%S"")
+        ts = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         uid = str(uuid.uuid4())[:8]
         filename = f"iq_{ts}_{uid}.iq"
         filepath = os.path.join(Config.CAPTURES_DIR, filename)
@@ -31,7 +31,7 @@ def do_iq_capture(freq_hz, sample_rate, duration_sec, gain='auto', label=''):
             "-n", str(num_samples),
         ]
         if gain == 'auto':
-            cmd += ["-A"]
+            cmd += ["-g", "0"]
         else:
             cmd += ["-g", str(int(float(gain) * 10))]
         cmd.append(filepath)
@@ -72,7 +72,7 @@ def do_sweep(start_hz, stop_hz, bin_size=1_000_000, gain='auto', label='', durat
         logger.warning("do_sweep: device busy, sweep skipped")
         return False, {"error": "RTL-SDR busy", "success": False}
     try:
-        ts = datetime.datetime.now().strftime(""%d-%m-%Y_%H-%M-%S"")
+        ts = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         uid = str(uuid.uuid4())[:8]
         filename = f"sweep_{ts}_{uid}.csv"
         filepath = os.path.join(Config.CAPTURES_DIR, filename)

@@ -12,14 +12,14 @@ scheduled_jobs = {}
 
 
 def init_scheduler():
-    scheduler.start()
-    logger.info("Scheduler started")
-
+    if not scheduler.running:
+        scheduler.start()
+        logger.info("Scheduler started")
 
 def shutdown_scheduler():
-    scheduler.shutdown()
-    logger.info("Scheduler stopped")
-
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("Scheduler stopped")
 
 def add_job(capture_type, cron_expr, params, socketio):
     job_id = str(uuid.uuid4())[:8]

@@ -7,8 +7,8 @@ class Config:
     CAPTURES_DIR =   os.path.join(BASE_DIR, 'captures')
     BUGREPORTS_DIR = os.path.join(BASE_DIR, 'bugreports')
 
-    RTL_SDR_PATH = '/usr/bin/rtl_sdr'
-    RTL_POWER_PATH = '/usr/bin/rtl_power'
+    RTL_SDR_PATH = '/usr/local/bin/rtl_sdr'
+    RTL_POWER_PATH = '/usr/local/bin/rtl_power'
     LSUSB_PATH = '/usr/bin/lsusb'
 
     GAIN_MIN = 0

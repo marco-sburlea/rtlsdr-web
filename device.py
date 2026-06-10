@@ -13,7 +13,7 @@ def check_rtlsdr():
             text=True,
             timeout=3
         )
-        if "0bda" in result.stdout.lower:
+        if "0bda" in result.stdout.lower():
             return True, "RTL-SDR Online"
     except Exception as e:
         logger.error(f"check_rtlsdr error: {e}")

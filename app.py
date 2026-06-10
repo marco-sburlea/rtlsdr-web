@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import logging
 import atexit
 from flask import Flask, render_template
@@ -12,8 +14,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
-
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 # Register blueprints
 from routes.capture import bp as capture_bp
 from routes.scan import bp as scan_bp

@@ -1,4 +1,3 @@
-import re
 import threading
 import logging
 from flask import Blueprint, request, jsonify
@@ -23,6 +22,7 @@ def validate_gain(gain):
 
 @bp.route('/api/capture/iq', methods=['POST'])
 def capture_iq():
+    from app import socketio as sio
     data = request.json
     freq = float(data.get('frequency', 100e6))
     rate = float(data.get('sample_rate', 2_048_000))
@@ -32,18 +32,18 @@ def capture_iq():
     if err:
         return jsonify({"error": err}), 400
 
-    from app import socketio
     def run():
-        socketio.emit('capture_started', {'type': 'iq'})
+        sio.emit('capture_started', {'type': 'iq'}, namespace='/')
         success, meta = do_iq_capture(freq, rate, duration, gain, label)
-        socketio.emit('capture_done', meta)
+        sio.emit('capture_done', meta, namespace='/')
 
-    threading.Thread(target=run, daemon=True).start()
+    sio.start_background_task(run)
     return jsonify({"status": "started"})
 
 
 @bp.route('/api/capture/sweep', methods=['POST'])
 def capture_sweep():
+    from app import socketio as sio
     data = request.json
     start = float(data.get('start_freq', 87.5e6))
     stop = float(data.get('stop_freq', 108e6))
@@ -54,11 +54,10 @@ def capture_sweep():
     if err:
         return jsonify({"error": err}), 400
 
-    from app import socketio
     def run():
-        socketio.emit('capture_started', {'type': 'sweep'})
+        sio.emit('capture_started', {'type': 'sweep'}, namespace='/')
         success, meta = do_sweep(start, stop, bin_size, gain, label, duration_sec)
-        socketio.emit('capture_done', meta)
+        sio.emit('capture_done', meta, namespace='/')
 
-    threading.Thread(target=run, daemon=True).start()
+    sio.start_background_task(run)
     return jsonify({"status": "started"})
