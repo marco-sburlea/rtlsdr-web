@@ -446,7 +446,7 @@
       <div class="panel-title">IQ Capture Settings</div>
       <div class="grid-2">
         <div class="field">
-          <label>Frecvență (Hz)</label>
+          <label>Frequency (Hz)</label>
           <input type="number" id="iq-freq" value="100000000" step="1000">
         </div>
         <div class="field">
@@ -461,7 +461,7 @@
           </select>
         </div>
         <div class="field">
-          <label>Durată (secunde)</label>
+          <label>Duration (seconds)</label>
           <input type="number" id="iq-dur" value="5" min="1" max="300">
         </div>
         <div class="field">
@@ -487,17 +487,17 @@
         </div>
       </div>
       <div class="field">
-        <label>Etichetă (opțional)</label>
+        <label>Label (optional)</label>
         <input type="text" id="iq-label" placeholder="ex: FM Radio 100MHz">
       </div>
       <div style="margin-top:16px;">
-        <button class="btn btn-success btn-full" id="btn-iq-start" onclick="startIQCapture()">▶ START CAPTURĂ IQ</button>
+        <button class="btn btn-success btn-full" id="btn-iq-start" onclick="startIQCapture()">▶ START IQ CAPTURE</button>
       </div>
     </div>
     <div class="panel">
       <div class="panel-title">Status & Log</div>
       <div id="iq-status" style="padding:12px; background:var(--bg); border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--text3); margin-bottom:12px; min-height:80px;">
-        În așteptare...
+        Idle...
       </div>
       <div id="status-log"></div>
     </div>
@@ -543,11 +543,11 @@
         </div>
       </div>
       <div class="field">
-        <label>Etichetă</label>
+        <label>Label</label>
         <input type="text" id="sw-label" placeholder="ex: FM Band Sweep">
       </div>
       <div class="field">
-        <label>Durată sweep (s) — 0 = un singur sweep</label>
+        <label>Sweep duration (s) — 0 = single sweep</label>
         <input type="number" id="sw-duration" value="0" min="0" step="1">
       </div>
       <div style="margin-top:16px;">
@@ -575,7 +575,7 @@
   <div class="scan-stats">
     <div class="stat-box">
       <div class="stat-label">Status</div>
-      <div class="stat-value" id="scan-status-val" style="font-size:13px; color:var(--red);">OPRIT</div>
+      <div class="stat-value" id="scan-status-val" style="font-size:13px; color:var(--red);">STOPPED</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">Peak dBm</div>
@@ -586,7 +586,7 @@
       <div class="stat-value" id="scan-peak-freq" style="font-size:13px;">---</div>
     </div>
     <div class="stat-box">
-      <div class="stat-label">Capturi Auto</div>
+      <div class="stat-label">Auto Captures</div>
       <div class="stat-value" id="scan-captures">0</div>
     </div>
   </div>
@@ -638,11 +638,11 @@
       <div class="panel-title">Trigger Automat</div>
       <div class="grid-2">
         <div class="field">
-          <label>Prag (dB)</label>
+          <label>Threshold (dB)</label>
           <input type="number" id="sc-threshold" value="-50" step="1">
         </div>
         <div class="field">
-          <label>Durată captură (s)</label>
+          <label>Capture duration (s)</label>
           <input type="number" id="sc-cap-dur" value="10" min="1" max="300">
         </div>
         <div class="field">
@@ -652,7 +652,7 @@
       </div>
 
       <div id="cooldown-indicator" style="display:none; margin-top:8px; padding:8px 12px; background:var(--bg); border:1px solid var(--orange); border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--orange);">
-        ⏳ COOLDOWN — mai așteaptă <span id="cooldown-remaining">--</span>s
+        ⏳ COOLDOWN — wait <span id="cooldown-remaining">--</span>s
         <div style="margin-top:6px; height:4px; background:var(--border); border-radius:2px; overflow:hidden;">
           <div id="cooldown-bar" style="height:100%; background:var(--orange); transition:width 1s linear; width:100%;"></div>
         </div>
@@ -661,14 +661,14 @@
       <div id="last-trigger-box" style="display:none; margin-top:8px; background:var(--bg); border:1px solid var(--border2); border-radius:6px; padding:10px;">
         <div style="font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Ultimul Trigger</div>
         <div style="font-family:'Share Tech Mono',monospace; font-size:12px;">
-          <span style="color:var(--text2);">Frecvență:</span> <span id="last-freq"  style="color:var(--accent);">-</span><br>
-          <span style="color:var(--text2);">Nivel:</span>     <span id="last-db"    style="color:var(--red);">-</span><br>
+          <span style="color:var(--text2);">Frequency:</span> <span id="last-freq"  style="color:var(--accent);">-</span><br>
+          <span style="color:var(--text2);">Level:</span>     <span id="last-db"    style="color:var(--red);">-</span><br>
           <span style="color:var(--text2);">Ora:</span>       <span id="last-time"  style="color:var(--text2);">-</span>
         </div>
       </div>
 
       <div id="trigger-log" style="margin-top:10px; max-height:80px; overflow-y:auto; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3);">
-        Niciun trigger...
+        No triggers yet...
       </div>
     </div>
   </div>
@@ -678,13 +678,13 @@
 <div id="tab-schedule" class="tab-panel">
   <div class="grid-2">
     <div class="panel">
-      <div class="panel-title">Adaugă Sarcină Programată</div>
+      <div class="panel-title">Add Scheduled Task</div>
       <div class="field">
-        <label>Expresie Cron (min oră zi lună zi_săpt)</label>
+        <label>Cron expression (min hour day month day_of_week)</label>
         <input type="text" id="sched-cron" value="0 * * * *" placeholder="0 * * * *">
       </div>
       <div class="field">
-        <label>Tip Captură</label>
+        <label>Capture Type</label>
         <select id="sched-type" onchange="updateSchedForm()">
           <option value="iq">IQ Capture</option>
           <option value="sweep">Frequency Sweep</option>
@@ -694,11 +694,11 @@
       <div id="sched-iq-fields">
         <div class="grid-2">
           <div class="field">
-            <label>Frecvență (Hz)</label>
+            <label>Frequency (Hz)</label>
             <input type="number" id="sched-freq" value="100000000">
           </div>
           <div class="field">
-            <label>Durată (s)</label>
+            <label>Duration (s)</label>
             <input type="number" id="sched-dur" value="10">
           </div>
           <div class="field">
@@ -732,7 +732,7 @@
             <input type="number" id="sched-sw-stop" value="108000000">
           </div>
           <div class="field">
-            <label>Durată (s)</label>
+            <label>Duration (s)</label>
             <input type="number" id="sched-sw-dur" value="120" min="1">
           </div>
           <div class="field">
@@ -757,20 +757,20 @@
 
       <div style="background:var(--bg); border-radius:6px; padding:10px; margin:12px 0; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); line-height:1.8;">
         Exemple cron:<br>
-        <span style="color:var(--accent)">0 * * * *</span> → la fiecare oră fix<br>
+        <span style="color:var(--accent)">0 * * * *</span> → every hour on the hour<br>
         <span style="color:var(--accent)">*/15 * * * *</span> → la fiecare 15 min<br>
         <span style="color:var(--accent)">0 6 * * *</span> → zilnic la 06:00<br>
-        <span style="color:var(--accent)">0 8,20 * * *</span> → la 08:00 și 20:00
+        <span style="color:var(--accent)">0 8,20 * * *</span> → at 08:00 and 20:00
       </div>
 
-      <button class="btn btn-success btn-full" onclick="addSchedule()">+ ADAUGĂ SARCINĂ</button>
+      <button class="btn btn-success btn-full" onclick="addSchedule()">+ ADD TASK</button>
     </div>
 
     <div class="panel">
-      <div class="panel-title">Sarcini Active</div>
+      <div class="panel-title">Active Tasks</div>
       <div id="schedule-list">
         <div style="color:var(--text3); font-family:'Share Tech Mono',monospace; font-size:12px; padding:20px; text-align:center;">
-          Nicio sarcină programată
+          No scheduled tasks
         </div>
       </div>
     </div>
@@ -781,7 +781,7 @@
 <div id="tab-captures" class="tab-panel">
   <div class="disk-detail-card">
     <div class="disk-detail-item">
-      <span class="disk-detail-label">Spațiu Total</span>
+      <span class="disk-detail-label">Total Space</span>
       <span class="disk-detail-value" id="disk-total">--</span>
       <span class="disk-detail-sub">disk root</span>
     </div>
@@ -796,9 +796,9 @@
       <span class="disk-detail-sub">disponibil</span>
     </div>
     <div class="disk-detail-item">
-      <span class="disk-detail-label">Capturi</span>
+      <span class="disk-detail-label">Captures</span>
       <span class="disk-detail-value" id="disk-captures">--</span>
-      <span class="disk-detail-sub">în /captures</span>
+      <span class="disk-detail-sub">in /captures</span>
     </div>
     <div class="disk-full-bar-wrap">
       <div class="disk-full-bar-fill" id="disk-full-bar" style="width:0%"></div>
@@ -807,20 +807,20 @@
 
   <div class="panel">
     <div class="panel-title" style="justify-content:space-between; display:flex;">
-      <span>Capturi Salvate</span>
+      <span>Saved Captures</span>
       <button class="btn btn-primary" onclick="loadCaptures()" style="padding:4px 12px; font-size:10px;">↻ REFRESH</button>
     </div>
     <div style="overflow-x:auto;">
       <table class="captures-table">
         <thead>
           <tr>
-            <th>Timestamp</th><th>Tip</th><th>Frecvență</th><th>Durată</th>
-            <th>Sample Rate</th><th>Gain</th><th>Etichetă</th>
-            <th>Size</th><th>Status</th><th>Acțiuni</th>
+            <th>Timestamp</th><th>Type</th><th>Frequency</th><th>Duration</th>
+            <th>Sample Rate</th><th>Gain</th><th>Label</th>
+            <th>Size</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="captures-tbody">
-          <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text3);">Se încarcă...</td></tr>
+          <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text3);">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -831,16 +831,16 @@
 <div id="tab-bugs" class="tab-panel">
   <div class="grid-2">
     <div class="panel">
-      <div class="panel-title">Raportează o Problemă</div>
+      <div class="panel-title">Report a Bug</div>
       <div class="field">
-        <label>Numele tău (opțional)</label>
+        <label>Your name (optional)</label>
         <input type="text" id="bug-name" placeholder="ex: Student A">
       </div>
       <div class="field">
         <label>Categorie</label>
         <select id="bug-category">
-          <option value="ui">Interfață (UI)</option>
-          <option value="capture">Captură IQ</option>
+          <option value="ui">Interface (UI)</option>
+          <option value="capture">IQ Capture</option>
           <option value="sweep">Frequency Sweep</option>
           <option value="scan">Band Scan</option>
           <option value="schedule">Schedule</option>
@@ -851,22 +851,22 @@
       <div class="field">
         <label>Severitate</label>
         <select id="bug-severity">
-          <option value="low">Mică — cosmetic, nu afectează funcționalitatea</option>
-          <option value="medium" selected>Medie — funcție parțial afectată</option>
-          <option value="high">Mare — funcție complet nefuncțională</option>
+          <option value="low">Low — cosmetic, does not affect functionality</option>
+          <option value="medium" selected>Medium — feature partially affected</option>
+          <option value="high">High — feature completely broken</option>
         </select>
       </div>
       <div class="field">
-        <label>Descriere problemă *</label>
-        <textarea id="bug-description" rows="4" placeholder="Descrie ce s-a întâmplat..."
+        <label>Bug description *</label>
+        <textarea id="bug-description" rows="4" placeholder="Describe what happened..."
           style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); padding:8px; font-family:'Share Tech Mono',monospace; font-size:12px; resize:vertical;"></textarea>
       </div>
       <div class="field">
-        <label>Pași pentru reproducere (opțional)</label>
-        <textarea id="bug-steps" rows="3" placeholder="1. Am apăsat butonul X&#10;2. Am setat frecvența Y&#10;3. Eroarea a apărut..."
+        <label>Steps to reproduce (optional)</label>
+        <textarea id="bug-steps" rows="3" placeholder="1. Clicked button X&#10;2. Set frequency Y&#10;3. The error appeared..."
           style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); padding:8px; font-family:'Share Tech Mono',monospace; font-size:12px; resize:vertical;"></textarea>
       </div>
-      <button class="btn btn-primary btn-full" onclick="submitBugReport()" style="margin-top:8px;">📤 TRIMITE RAPORT</button>
+      <button class="btn btn-primary btn-full" onclick="submitBugReport()" style="margin-top:8px;">📤 SUBMIT REPORT</button>
       <div id="bug-submit-msg" style="display:none; margin-top:10px; padding:10px; border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:12px;"></div>
     </div>
 
@@ -877,7 +877,7 @@
       </div>
       <div id="bug-reports-list" style="overflow-y:auto; max-height:600px;">
         <div style="color:var(--text3); font-family:'Share Tech Mono',monospace; font-size:12px; text-align:center; padding:20px;">
-          Niciun raport...
+          No reports...
         </div>
       </div>
     </div>
@@ -892,8 +892,8 @@ const socket = io();
 let spectrumChart = null;
 let scanAutoCaptures = 0;
 
-socket.on('connect',    () => log('Conectat la server', 'info'));
-socket.on('disconnect', () => log('Deconectat de la server', 'err'));
+socket.on('connect',    () => log('Connected to server', 'info'));
+socket.on('disconnect', () => log('Disconnected from server', 'err'));
 
 socket.on('device_status', data => {
   document.getElementById('status-dot').className  = 'status-dot ' + (data.connected ? 'online' : 'offline');
@@ -902,22 +902,22 @@ socket.on('device_status', data => {
 
 socket.on('capture_started', data => {
   const el = document.getElementById('iq-status');
-  el.innerHTML = `<span class="running-dot"></span>Captură ${data.type.toUpperCase()} în desfășurare...`;
+  el.innerHTML = `<span class="running-dot"></span>${data.type.toUpperCase()} capture in progress...`;
   el.style.color = 'var(--green)';
-  log(`Captură ${data.type} pornită`, 'info');
+  log(`${data.type} capture started`, 'info');
   document.getElementById('btn-iq-start').disabled = true;
 });
 
 socket.on('capture_done', data => {
   const el = document.getElementById('iq-status');
   if (data.success) {
-    el.innerHTML = `✓ Captură finalizată: <strong>${data.filename}</strong><br>Size: ${fmtSize(data.size_bytes)}`;
+    el.innerHTML = `✓ Capture complete: <strong>${data.filename}</strong><br>Size: ${fmtSize(data.size_bytes)}`;
     el.style.color = 'var(--green)';
-    log(`Captură salvată: ${data.filename}`, 'ok');
+    log(`Capture saved: ${data.filename}`, 'ok');
   } else {
-    el.innerHTML = `✗ Eroare: ${data.error}`;
+    el.innerHTML = `✗ Error: ${data.error}`;
     el.style.color = 'var(--red)';
-    log(`Eroare captură: ${data.error}`, 'err');
+    log(`Capture error: ${data.error}`, 'err');
   }
   document.getElementById('btn-iq-start').disabled = false;
 });
@@ -927,11 +927,11 @@ socket.on('scan_data', data => {
 });
 
 socket.on('scan_stopped', () => {
-  document.getElementById('scan-status-val').textContent = 'OPRIT';
+  document.getElementById('scan-status-val').textContent = 'STOPPED';
   document.getElementById('scan-status-val').style.color  = 'var(--red)';
   document.getElementById('btn-scan-start').disabled = false;
   document.getElementById('btn-scan-stop').disabled  = true;
-  log('Band scan oprit', 'warn');
+  log('Band scan stopped', 'warn');
 });
 
 socket.on('scan_error', data => log('Scan error: ' + data.message, 'err'));
@@ -951,7 +951,7 @@ socket.on('threshold_triggered', data => {
     tlog.innerHTML = `<div style="color:var(--orange)">[${now}] IGNORAT (cooldown ${data.cooldown_remaining}s): ${data.freq_label} @ ${data.db} dB</div>` + tlog.innerHTML;
   } else {
     document.getElementById('trigger-alert-body').innerHTML =
-      `Frecvență: <strong>${data.freq_label}</strong><br>Nivel: <strong style="color:var(--red)">${data.db} dB</strong> (prag: ${data.threshold} dB)<br>Captură IQ pornită automat...`;
+      `Frequency: <strong>${data.freq_label}</strong><br>Level: <strong style="color:var(--red)">${data.db} dB</strong> (threshold: ${data.threshold} dB)<br>IQ capture started automatically...`;
     const alertEl = document.getElementById('trigger-alert');
     alertEl.style.display = 'block';
     setTimeout(() => { alertEl.style.display = 'none'; }, 6000);
@@ -984,11 +984,11 @@ socket.on('threshold_triggered', data => {
 socket.on('auto_capture_done', data => {
   scanAutoCaptures++;
   document.getElementById('scan-captures').textContent = scanAutoCaptures;
-  log(`Captură auto: ${data.filename}`, 'ok');
+  log(`Auto capture: ${data.filename}`, 'ok');
 });
 
 socket.on('scheduled_capture_done', data => {
-  log(`Job ${data.job_id}: ${data.meta.filename || 'eroare'}`, data.meta.success ? 'ok' : 'err');
+  log(`Job ${data.job_id}: ${data.meta.filename || 'error'}`, data.meta.success ? 'ok' : 'err');
   loadSchedules();
 });
 
@@ -1115,7 +1115,7 @@ async function startSweep() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload)
   });
-  log('Sweep pornit...', 'info');
+  log('Sweep started...', 'info');
 }
 
 function setPreset(start, stop, name) {
@@ -1234,7 +1234,7 @@ async function startScan() {
   document.getElementById('scan-status-val').style.color = 'var(--green)';
   document.getElementById('btn-scan-start').disabled = true;
   document.getElementById('btn-scan-stop').disabled  = false;
-  log('Band scan pornit', 'info');
+  log('Band scan started', 'info');
 }
 
 async function stopScan() {
@@ -1269,8 +1269,8 @@ async function addSchedule() {
     body: JSON.stringify({ cron: document.getElementById('sched-cron').value, capture_type: type, params })
   });
   const data = await res.json();
-  if (data.error) { log('Eroare: ' + data.error, 'err'); return; }
-  log(`Job adăugat: ${data.job_id}, următor run: ${data.next_run}`, 'ok');
+  if (data.error) { log('Error: ' + data.error, 'err'); return; }
+  log(`Job added: ${data.job_id}, next run: ${data.next_run}`, 'ok');
   loadSchedules();
 }
 
@@ -1278,12 +1278,12 @@ async function loadSchedules() {
   const jobs = await fetch('/api/schedule/list').then(r => r.json());
   const cont = document.getElementById('schedule-list');
   if (!jobs.length) {
-    cont.innerHTML = '<div style="color:var(--text3); font-family:\'Share Tech Mono\',monospace; font-size:12px; padding:20px; text-align:center;">Nicio sarcină programată</div>';
+    cont.innerHTML = '<div style="color:var(--text3); font-family:\'Share Tech Mono\',monospace; font-size:12px; padding:20px; text-align:center;">No scheduled tasks</div>';
     return;
   }
   cont.innerHTML = `
     <table class="schedule-table">
-      <thead><tr><th>ID</th><th>Cron</th><th>Tip</th><th>Frecvență/Band</th><th>Următor Run</th><th></th></tr></thead>
+      <thead><tr><th>ID</th><th>Cron</th><th>Type</th><th>Frequency/Band</th><th>Next Run</th><th></th></tr></thead>
       <tbody>${jobs.map(j => `
         <tr>
           <td>${j.id}</td>
@@ -1299,7 +1299,7 @@ async function loadSchedules() {
 
 async function removeSchedule(id) {
   await fetch('/api/schedule/remove/' + id, { method: 'DELETE' });
-  log(`Job ${id} șters`, 'warn');
+  log(`Job ${id} deleted`, 'warn');
   loadSchedules();
 }
 
@@ -1324,14 +1324,14 @@ async function submitBugReport() {
     }).then(r => r.json());
 
     if (data.status === 'ok') {
-      showBugMsg('✓ Raport trimis! ID: ' + data.id, true);
+      showBugMsg('✓ Report submitted! ID: ' + data.id, true);
       document.getElementById('bug-description').value = '';
       document.getElementById('bug-steps').value       = '';
       document.getElementById('bug-name').value        = '';
       loadBugReports();
     }
   } catch(e) {
-    showBugMsg('Eroare la trimitere: ' + e.message, false);
+    showBugMsg('Submit error: ' + e.message, false);
   }
 }
 
@@ -1345,7 +1345,7 @@ function showBugMsg(msg, ok) {
   setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
 
-const severityLabel = { low: 'Mică', medium: 'Medie', high: 'Mare' };
+const severityLabel = { low: 'Low', medium: 'Medium', high: 'High' };
 const categoryLabel = { ui: 'UI', capture: 'IQ Capture', sweep: 'Sweep', scan: 'Band Scan', schedule: 'Schedule', device: 'Dispozitiv', other: 'Altele' };
 
 async function loadBugReports() {
@@ -1353,7 +1353,7 @@ async function loadBugReports() {
     const reports   = await fetch('/api/bugreports/list').then(r => r.json());
     const container = document.getElementById('bug-reports-list');
     if (!reports.length) {
-      container.innerHTML = '<div style="color:var(--text3); font-family:\'Share Tech Mono\',monospace; font-size:12px; text-align:center; padding:20px;">Niciun raport...</div>';
+      container.innerHTML = '<div style="color:var(--text3); font-family:\'Share Tech Mono\',monospace; font-size:12px; text-align:center; padding:20px;">No reports...</div>';
       return;
     }
     container.innerHTML = reports.map(r => `
@@ -1386,7 +1386,7 @@ async function loadCaptures() {
   const captures = await fetch('/api/captures/list').then(r => r.json());
   const tbody    = document.getElementById('captures-tbody');
   if (!captures.length) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text3);">Nicio captură salvată</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text3);">No saved captures</td></tr>';
     return;
   }
   tbody.innerHTML = captures.map(c => `
@@ -1408,7 +1408,7 @@ async function loadCaptures() {
 }
 
 async function deleteCapture(id) {
-  if (!confirm('Ștergi această captură?')) return;
+  if (!confirm('Delete this capture?')) return;
   await fetch('/api/captures/delete/' + id, { method: 'DELETE' });
   loadCaptures();
 }
@@ -1430,7 +1430,7 @@ function fmtSize(bytes) {
   return bytes + ' B';
 }
 
-log('RTL-SDR Control System pornit', 'info');
+log('RTL-SDR Control System started', 'info');
 </script>
 </body>
 </html>
