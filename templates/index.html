@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTL-SDR Control Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:         #050a0f;
+    --bg2:        #080f17;
+    --panel:      #0a141e;
+    --panel2:     #0d1924;
+    --border:     #1a3a5c;
+    --border2:    #0e2338;
+    --accent:     #00d4ff;
+    --accent2:    #0088cc;
+    --green:      #00ff88;
+    --red:        #ff3355;
+    --yellow:     #ffcc00;
+    --orange:     #ff8800;
+    --text:       #c8e8ff;
+    --text2:      #7aafcc;
+    --text3:      #3a6a8a;
+    --glow:       0 0 20px rgba(0,212,255,0.3);
+    --glow-green: 0 0 20px rgba(0,255,136,0.3);
+    --glow-red:   0 0 20px rgba(255,51,85,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,212,255,0.03) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0,212,255,0.02) 40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    background: linear-gradient(90deg, #050e1a, #071525, #050e1a);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 30px rgba(0,0,0,0.7), 0 1px 0 rgba(0,212,255,0.15);
+  }
+
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 44px; height: 44px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 10px rgba(0,212,255,0.3); }
+    50%      { box-shadow: 0 0 30px rgba(0,212,255,0.7); }
+  }
+  .logo-text { line-height: 1.1; }
+  .logo-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px; font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0,212,255,0.5);
+  }
+  .logo-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: var(--text3); letter-spacing: 2px;
+  }
+
+  #device-status {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg2);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+  }
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--text3);
+    transition: all 0.3s;
+  }
+  .status-dot.online  { background: var(--green); box-shadow: var(--glow-green); }
+  .status-dot.offline { background: var(--red);   box-shadow: var(--glow-red); }
+
+  #clock {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: var(--accent); letter-spacing: 2px;
+  }
+
+  /* ── SYS STAT CHIPS ── */
+  .sys-stat {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg2);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--text2);
+  }
+  .sys-stat .mini-bar-wrap {
+    width: 50px; height: 6px;
+    background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .sys-stat .mini-bar-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.5s, background 0.5s;
+    background: var(--green);
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    position: relative; z-index: 5;
+    display: flex; gap: 2px;
+    padding: 0 28px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border2);
+  }
+  .tab-btn {
+    padding: 12px 22px;
+    background: none; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    text-shadow: 0 0 10px rgba(0,212,255,0.5);
+  }
+
+  /* ── MAIN ── */
+  main {
+    position: relative; z-index: 5;
+    padding: 24px 28px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative; overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.4;
+  }
+  .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 700;
+    color: var(--accent); letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── FORM ── */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 11px; color: var(--text3);
+    letter-spacing: 2px; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 6px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  input, select {
+    width: 100%; padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,212,255,0.15);
+  }
+  select option { background: var(--bg2); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 10px 20px;
+    border: 1px solid; border-radius: 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: white; opacity: 0; transition: opacity 0.15s;
+  }
+  .btn:active::after { opacity: 0.08; }
+  .btn-primary  { background: rgba(0,212,255,0.1);  border-color: var(--accent); color: var(--accent); }
+  .btn-primary:hover  { background: rgba(0,212,255,0.2);  box-shadow: var(--glow); }
+  .btn-success  { background: rgba(0,255,136,0.1);  border-color: var(--green); color: var(--green); }
+  .btn-success:hover  { background: rgba(0,255,136,0.2);  box-shadow: var(--glow-green); }
+  .btn-success:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-danger   { background: rgba(255,51,85,0.1);  border-color: var(--red); color: var(--red); }
+  .btn-danger:hover   { background: rgba(255,51,85,0.2);  box-shadow: var(--glow-red); }
+  .btn-warn     { background: rgba(255,204,0,0.1);  border-color: var(--yellow); color: var(--yellow); }
+  .btn-warn:hover     { background: rgba(255,204,0,0.2); }
+  .btn-full { width: 100%; }
+
+  /* ── STATUS LOG ── */
+  #status-log {
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 12px;
+    height: 160px; overflow-y: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; line-height: 1.8;
+  }
+  .log-entry { display: flex; gap: 10px; }
+  .log-time  { color: var(--text3); flex-shrink: 0; }
+  .log-msg   { color: var(--text2); }
+  .log-ok   .log-msg { color: var(--green); }
+  .log-err  .log-msg { color: var(--red); }
+  .log-warn .log-msg { color: var(--yellow); }
+  .log-info .log-msg { color: var(--accent); }
+
+  /* ── SPECTRUM ── */
+  .chart-wrap {
+    position: relative; height: 320px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 6px; overflow: hidden;
+  }
+  .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+  /* ── SCAN STATS ── */
+  .scan-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 16px;
+  }
+  .stat-box {
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 12px; text-align: center;
+  }
+  .stat-label {
+    font-size: 10px; color: var(--text3);
+    letter-spacing: 2px; text-transform: uppercase;
+    font-family: 'Share Tech Mono', monospace; margin-bottom: 4px;
+  }
+  .stat-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px; font-weight: 700; color: var(--accent);
+  }
+  .stat-value.alert { color: var(--red); animation: blink 0.5s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* ── TABLES ── */
+  .captures-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .captures-table th {
+    text-align: left; padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text3); font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 400;
+  }
+  .captures-table td {
+    padding: 8px 12px; border-bottom: 1px solid var(--border2);
+    color: var(--text2); font-family: 'Share Tech Mono', monospace; font-size: 12px;
+  }
+  .captures-table tr:hover td { background: rgba(0,212,255,0.03); }
+
+  .schedule-table { width: 100%; border-collapse: collapse; }
+  .schedule-table th, .schedule-table td {
+    padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border2);
+    font-family: 'Share Tech Mono', monospace; font-size: 12px;
+  }
+  .schedule-table th { color: var(--text3); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .schedule-table td { color: var(--text2); }
+
+  /* ── BADGES ── */
+  .badge {
+    padding: 2px 8px; border-radius: 3px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .badge-iq     { background: rgba(0,212,255,0.15);  color: var(--accent); border: 1px solid var(--accent2); }
+  .badge-sweep  { background: rgba(255,204,0,0.15);  color: var(--yellow); border: 1px solid rgba(255,204,0,0.4); }
+  .badge-ok     { background: rgba(0,255,136,0.15);  color: var(--green);  border: 1px solid rgba(0,255,136,0.3); }
+  .badge-fail   { background: rgba(255,51,85,0.15);  color: var(--red);    border: 1px solid rgba(255,51,85,0.3); }
+
+  /* ── TRIGGER ALERT ── */
+  #trigger-alert {
+    display: none; position: fixed;
+    top: 80px; right: 24px; z-index: 100;
+    background: rgba(255,51,85,0.15);
+    border: 1px solid var(--red); border-radius: 8px;
+    padding: 16px 20px; min-width: 300px;
+    box-shadow: var(--glow-red);
+    animation: slide-in 0.3s ease;
+  }
+  @keyframes slide-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  #trigger-alert .alert-title {
+    font-family: 'Orbitron', monospace; font-size: 11px;
+    color: var(--red); letter-spacing: 2px; margin-bottom: 8px;
+  }
+  #trigger-alert .alert-body {
+    font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--text);
+  }
+
+  .running-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); display: inline-block; margin-right: 6px;
+    animation: blink 1s step-end infinite;
+  }
+
+  /* ── DISK DETAIL ── */
+  .disk-detail-card {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 16px;
+    background: var(--panel); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 16px;
+  }
+  .disk-detail-item { text-align: center; }
+  .disk-detail-label {
+    font-size: 10px; color: var(--text3);
+    letter-spacing: 2px; text-transform: uppercase;
+    font-family: 'Share Tech Mono', monospace; display: block; margin-bottom: 4px;
+  }
+  .disk-detail-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px; font-weight: 700; color: var(--accent); display: block;
+  }
+  .disk-detail-sub { font-size: 10px; color: var(--text2); }
+  .disk-full-bar-wrap {
+    grid-column: 1 / -1; height: 8px;
+    background: var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .disk-full-bar-fill {
+    height: 100%; border-radius: 4px;
+    transition: width 0.5s, background 0.5s; background: var(--green);
+  }
+</style>
+</head>
+<body>
+
+<!-- TRIGGER ALERT -->
+<div id="trigger-alert">
+  <div class="alert-title">⚡ THRESHOLD EXCEEDED</div>
+  <div class="alert-body" id="trigger-alert-body">Signal detected</div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📡</div>
+    <div class="logo-text">
+      <div class="logo-title">RTL-SDR</div>
+      <div class="logo-sub">SPECTRUM CONTROL SYSTEM</div>
+    </div>
+  </div>
+  <div class="sys-stat">
+    🌡️ <span id="cpu-temp-text">--°C</span>
+  </div>
+  <div class="sys-stat">
+    ⚙️ CPU <span id="cpu-pct-text" style="color:var(--accent); margin:0 4px;">--%</span>
+    <div class="mini-bar-wrap"><div class="mini-bar-fill" id="cpu-bar-fill" style="width:0%"></div></div>
+  </div>
+  <div class="sys-stat">
+    🧠 RAM <span id="ram-pct-text" style="color:var(--accent); margin:0 4px;">--%</span>
+    <div class="mini-bar-wrap"><div class="mini-bar-fill" id="ram-bar-fill" style="width:0%"></div></div>
+  </div>
+  <div class="sys-stat">
+    💾 <span id="disk-header-text">--</span>
+    <div class="mini-bar-wrap"><div class="mini-bar-fill" id="disk-bar-fill" style="width:0%"></div></div>
+    <span id="disk-header-pct">--%</span>
+  </div>
+  <div id="device-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Checking device...</span>
+  </div>
+  <div id="clock">--:--:--</div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('iq', event)">IQ Capture</button>
+  <button class="tab-btn" onclick="switchTab('sweep', event)">Frequency Sweep</button>
+  <button class="tab-btn" onclick="switchTab('scan', event)">Band Scan</button>
+  <button class="tab-btn" onclick="switchTab('schedule', event)">Schedule</button>
+  <button class="tab-btn" onclick="switchTab('captures', event)">Captures</button>
+  <button class="tab-btn" onclick="switchTab('bugs', event)">Bug Reports</button>
+</div>
+
+<main>
+
+<!-- TAB: IQ CAPTURE -->
+<div id="tab-iq" class="tab-panel active">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">IQ Capture Settings</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Frecvență (Hz)</label>
+          <input type="number" id="iq-freq" value="100000000" step="1000">
+        </div>
+        <div class="field">
+          <label>Sample Rate</label>
+          <select id="iq-srate">
+            <option value="250000">250 kHz</option>
+            <option value="1024000">1.024 MHz</option>
+            <option value="1536000">1.536 MHz</option>
+            <option value="2048000" selected>2.048 MHz</option>
+            <option value="2400000">2.4 MHz</option>
+            <option value="2560000">2.56 MHz</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Durată (secunde)</label>
+          <input type="number" id="iq-dur" value="5" min="1" max="300">
+        </div>
+        <div class="field">
+          <label>Gain</label>
+          <select id="iq-gain">
+            <option value="auto">Auto (AGC)</option>
+            <option value="0.0">0.0 dB</option><option value="0.9">0.9 dB</option>
+            <option value="1.4">1.4 dB</option><option value="2.7">2.7 dB</option>
+            <option value="3.7">3.7 dB</option><option value="7.7">7.7 dB</option>
+            <option value="8.7">8.7 dB</option><option value="12.5">12.5 dB</option>
+            <option value="14.4">14.4 dB</option><option value="15.7">15.7 dB</option>
+            <option value="16.6">16.6 dB</option><option value="19.7">19.7 dB</option>
+            <option value="20.7">20.7 dB</option><option value="22.9">22.9 dB</option>
+            <option value="25.4">25.4 dB</option><option value="28.0">28.0 dB</option>
+            <option value="29.7">29.7 dB</option><option value="32.8">32.8 dB</option>
+            <option value="33.8">33.8 dB</option><option value="36.4">36.4 dB</option>
+            <option value="37.2">37.2 dB</option><option value="38.6">38.6 dB</option>
+            <option value="40.2">40.2 dB</option><option value="42.1">42.1 dB</option>
+            <option value="43.4">43.4 dB</option><option value="43.9">43.9 dB</option>
+            <option value="44.5">44.5 dB</option><option value="48.0">48.0 dB</option>
+            <option value="49.6">49.6 dB</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Etichetă (opțional)</label>
+        <input type="text" id="iq-label" placeholder="ex: FM Radio 100MHz">
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-success btn-full" id="btn-iq-start" onclick="startIQCapture()">▶ START CAPTURĂ IQ</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Status & Log</div>
+      <div id="iq-status" style="padding:12px; background:var(--bg); border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--text3); margin-bottom:12px; min-height:80px;">
+        În așteptare...
+      </div>
+      <div id="status-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: SWEEP -->
+<div id="tab-sweep" class="tab-panel">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Frequency Sweep Settings</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Start (Hz)</label>
+          <input type="number" id="sw-start" value="87500000" step="100000">
+        </div>
+        <div class="field">
+          <label>Stop (Hz)</label>
+          <input type="number" id="sw-stop" value="108000000" step="100000">
+        </div>
+        <div class="field">
+          <label>Bin Size</label>
+          <select id="sw-bin">
+            <option value="3125">3.125 kHz</option>
+            <option value="6250">6.25 kHz</option>
+            <option value="12500">12.5 kHz</option>
+            <option value="25000">25 kHz</option>
+            <option value="50000">50 kHz</option>
+            <option value="100000" selected>100 kHz</option>
+            <option value="200000">200 kHz</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Gain</label>
+          <select id="sw-gain">
+            <option value="auto">Auto (AGC)</option>
+            <option value="0.0">0.0 dB</option><option value="0.9">0.9 dB</option>
+            <option value="1.4">1.4 dB</option><option value="2.7">2.7 dB</option>
+            <option value="3.7">3.7 dB</option><option value="7.7">7.7 dB</option>
+            <option value="8.7">8.7 dB</option><option value="12.5">12.5 dB</option>
+            <option value="14.4">14.4 dB</option><option value="49.6">49.6 dB</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Etichetă</label>
+        <input type="text" id="sw-label" placeholder="ex: FM Band Sweep">
+      </div>
+      <div class="field">
+        <label>Durată sweep (s) — 0 = un singur sweep</label>
+        <input type="number" id="sw-duration" value="0" min="0" step="1">
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-success btn-full" onclick="startSweep()">▶ START SWEEP</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Preset-uri rapide</div>
+      <div class="grid-2">
+        <button class="btn btn-primary" onclick="setPreset(87.5e6, 108e6, 'FM Band')">📻 FM Band</button>
+        <button class="btn btn-primary" onclick="setPreset(108e6, 137e6, 'Air Band')">✈ Air Band</button>
+        <button class="btn btn-primary" onclick="setPreset(144e6, 148e6, 'VHF 2m')">📡 VHF 2m</button>
+        <button class="btn btn-primary" onclick="setPreset(430e6, 440e6, 'UHF 70cm')">📡 UHF 70cm</button>
+        <button class="btn btn-primary" onclick="setPreset(433e6, 435e6, 'ISM 433')">🔧 ISM 433</button>
+        <button class="btn btn-primary" onclick="setPreset(862e6, 960e6, 'GSM 900')">📱 GSM 900</button>
+        <button class="btn btn-primary" onclick="setPreset(24e6, 1750e6, 'Full Scan')">🌐 Full Scan</button>
+        <button class="btn btn-primary" onclick="setPreset(1090e6, 1091e6, 'ADS-B')">✈ ADS-B</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: BAND SCAN -->
+<div id="tab-scan" class="tab-panel">
+  <div class="scan-stats">
+    <div class="stat-box">
+      <div class="stat-label">Status</div>
+      <div class="stat-value" id="scan-status-val" style="font-size:13px; color:var(--red);">OPRIT</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Peak dBm</div>
+      <div class="stat-value" id="scan-peak">---</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Peak Freq</div>
+      <div class="stat-value" id="scan-peak-freq" style="font-size:13px;">---</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Capturi Auto</div>
+      <div class="stat-value" id="scan-captures">0</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Spectrum Analyzer</div>
+    <div class="chart-wrap">
+      <canvas id="spectrumChart"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Scan Configuration</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Start Freq (Hz)</label>
+          <input type="number" id="sc-start" value="87500000">
+        </div>
+        <div class="field">
+          <label>Stop Freq (Hz)</label>
+          <input type="number" id="sc-stop" value="108000000">
+        </div>
+        <div class="field">
+          <label>Bin Size</label>
+          <select id="sc-bin">
+            <option value="25000">25 kHz</option>
+            <option value="50000">50 kHz</option>
+            <option value="100000" selected>100 kHz</option>
+            <option value="200000">200 kHz</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Gain</label>
+          <select id="sc-gain">
+            <option value="auto">Auto (AGC)</option>
+            <option value="0.0">0.0 dB</option><option value="14.4">14.4 dB</option>
+            <option value="29.7">29.7 dB</option><option value="49.6">49.6 dB</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:8px;">
+        <button class="btn btn-success" id="btn-scan-start" onclick="startScan()">▶ START SCAN</button>
+        <button class="btn btn-danger"  id="btn-scan-stop"  onclick="stopScan()" disabled>■ STOP SCAN</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Trigger Automat</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Prag (dB)</label>
+          <input type="number" id="sc-threshold" value="-50" step="1">
+        </div>
+        <div class="field">
+          <label>Durată captură (s)</label>
+          <input type="number" id="sc-cap-dur" value="10" min="1" max="300">
+        </div>
+        <div class="field">
+          <label>Cooldown (s)</label>
+          <input type="number" id="sc-cooldown" value="30" min="5" max="300">
+        </div>
+      </div>
+
+      <div id="cooldown-indicator" style="display:none; margin-top:8px; padding:8px 12px; background:var(--bg); border:1px solid var(--orange); border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--orange);">
+        ⏳ COOLDOWN — mai așteaptă <span id="cooldown-remaining">--</span>s
+        <div style="margin-top:6px; height:4px; background:var(--border); border-radius:2px; overflow:hidden;">
+          <div id="cooldown-bar" style="height:100%; background:var(--orange); transition:width 1s linear; width:100%;"></div>
+        </div>
+      </div>
+
+      <div id="last-trigger-box" style="display:none; margin-top:8px; background:var(--bg); border:1px solid var(--border2); border-radius:6px; padding:10px;">
+        <div style="font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Ultimul Trigger</div>
+        <div style="font-family:'Share Tech Mono',monospace; font-size:12px;">
+          <span style="color:var(--text2);">Frecvență:</span> <span id="last-freq"  style="color:var(--accent);">-</span><br>
+          <span style="color:var(--text2);">Nivel:</span>     <span id="last-db"    style="color:var(--red);">-</span><br>
+          <span style="color:var(--text2);">Ora:</span>       <span id="last-time"  style="color:var(--text2);">-</span>
+        </div>
+      </div>
+
+      <div id="trigger-log" style="margin-top:10px; max-height:80px; overflow-y:auto; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3);">
+        Niciun trigger...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: SCHEDULE -->
+<div id="tab-schedule" class="tab-panel">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Adaugă Sarcină Programată</div>
+      <div class="field">
+        <label>Expresie Cron (min oră zi lună zi_săpt)</label>
+        <input type="text" id="sched-cron" value="0 * * * *" placeholder="0 * * * *">
+      </div>
+      <div class="field">
+        <label>Tip Captură</label>
+        <select id="sched-type" onchange="updateSchedForm()">
+          <option value="iq">IQ Capture</option>
+          <option value="sweep">Frequency Sweep</option>
+        </select>
+      </div>
+
+      <div id="sched-iq-fields">
+        <div class="grid-2">
+          <div class="field">
+            <label>Frecvență (Hz)</label>
+            <input type="number" id="sched-freq" value="100000000">
+          </div>
+          <div class="field">
+            <label>Durată (s)</label>
+            <input type="number" id="sched-dur" value="10">
+          </div>
+          <div class="field">
+            <label>Sample Rate</label>
+            <select id="sched-srate">
+              <option value="1024000">1.024 MHz</option>
+              <option value="2048000" selected>2.048 MHz</option>
+              <option value="2400000">2.4 MHz</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Gain</label>
+            <select id="sched-gain">
+              <option value="auto">Auto (AGC)</option>
+              <option value="14.4">14.4 dB</option>
+              <option value="29.7">29.7 dB</option>
+              <option value="49.6">49.6 dB</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="sched-sweep-fields" style="display:none;">
+        <div class="grid-2">
+          <div class="field">
+            <label>Start (Hz)</label>
+            <input type="number" id="sched-sw-start" value="87500000">
+          </div>
+          <div class="field">
+            <label>Stop (Hz)</label>
+            <input type="number" id="sched-sw-stop" value="108000000">
+          </div>
+          <div class="field">
+            <label>Durată (s)</label>
+            <input type="number" id="sched-sw-dur" value="120" min="1">
+          </div>
+          <div class="field">
+            <label>Bin Size</label>
+            <select id="sched-sw-bin">
+              <option value="50000">50 kHz</option>
+              <option value="100000" selected>100 kHz</option>
+              <option value="200000">200 kHz</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Gain</label>
+            <select id="sched-sw-gain">
+              <option value="auto">Auto (AGC)</option>
+              <option value="14.4">14.4 dB</option>
+              <option value="29.7">29.7 dB</option>
+              <option value="49.6">49.6 dB</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg); border-radius:6px; padding:10px; margin:12px 0; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); line-height:1.8;">
+        Exemple cron:<br>
+        <span style="color:var(--accent)">0 * * * *</span> → la fiecare oră fix<br>
+        <span style="color:var(--accent)">*/15 * * * *</span> → la fiecare 15 min<br>
+        <span style="color:var(--accent)">0 6 * * *</span> → zilnic la 06:00<br>
+        <span style="color:var(--accent)">0 8,20 * * *</span> → la 08:00 și 20:00
+      </div>
+
+      <button class="btn btn-success btn-full" onclick="addSchedule()">+ ADAUGĂ SARCINĂ</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Sarcini Active</div>
+      <div id="schedule-list">
+        <div style="color:var(--text3); font-family:'Share Tech Mono',monospace; font-size:12px; padding:20px; text-align:center;">
+          Nicio sarcină programată
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: CAPTURES -->
+<div id="tab-captures" class="tab-panel">
+  <div class="disk-detail-card">
+    <div class="disk-detail-item">
+      <span class="disk-detail-label">Spațiu Total</span>
+      <span class="disk-detail-value" id="disk-total">--</span>
+      <span class="disk-detail-sub">disk root</span>
+    </div>
+    <div class="disk-detail-item">
+      <span class="disk-detail-label">Folosit</span>
+      <span class="disk-detail-value" id="disk-used">--</span>
+      <span class="disk-detail-sub" id="disk-used-pct">--%</span>
+    </div>
+    <div class="disk-detail-item">
+      <span class="disk-detail-label">Liber</span>
+      <span class="disk-detail-value" id="disk-free">--</span>
+      <span class="disk-detail-sub">disponibil</span>
+    </div>
+    <div class="disk-detail-item">
+      <span class="disk-detail-label">Capturi</span>
+      <span class="disk-detail-value" id="disk-captures">--</span>
+      <span class="disk-detail-sub">în /captures</span>
+    </div>
+    <div class="disk-full-bar-wrap">
+      <div class="disk-full-bar-fill" id="disk-full-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" style="justify-content:space-between; display:flex;">
+      <span>Capturi Salvate</span>
+      <button class="btn btn-primary" onclick="loadCaptures()" style="padding:4px 12px; font-size:10px;">↻ REFRESH</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="captures-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th><th>Tip</th><th>Frecvență</th><th>Durată</th>
+            <th>Sample Rate</th><th>Gain</th><th>Etichetă</th>
+            <th>Size</th><th>Status</th><th>Acțiuni</th>
+          </tr>
+        </thead>
+        <tbody id="captures-tbody">
+          <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text3);">Se încarcă...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: BUG REPORTS -->
+<div id="tab-bugs" class="tab-panel">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Raportează o Problemă</div>
+      <div class="field">
+        <label>Numele tău (opțional)</label>
+        <input type="text" id="bug-name" placeholder="ex: Student A">
+      </div>
+      <div class="field">
+        <label>Categorie</label>
+        <select id="bug-category">
+          <option value="ui">Interfață (UI)</option>
+          <option value="capture">Captură IQ</option>
+          <option value="sweep">Frequency Sweep</option>
+          <option value="scan">Band Scan</option>
+          <option value="schedule">Schedule</option>
+          <option value="device">Dispozitiv SDR</option>
+          <option value="other">Altele</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Severitate</label>
+        <select id="bug-severity">
+          <option value="low">Mică — cosmetic, nu afectează funcționalitatea</option>
+          <option value="medium" selected>Medie — funcție parțial afectată</option>
+          <option value="high">Mare — funcție complet nefuncțională</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Descriere problemă *</label>
+        <textarea id="bug-description" rows="4" placeholder="Descrie ce s-a întâmplat..."
+          style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); padding:8px; font-family:'Share Tech Mono',monospace; font-size:12px; resize:vertical;"></textarea>
+      </div>
+      <div class="field">
+        <label>Pași pentru reproducere (opțional)</label>
+        <textarea id="bug-steps" rows="3" placeholder="1. Am apăsat butonul X&#10;2. Am setat frecvența Y&#10;3. Eroarea a apărut..."
+          style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); padding:8px; font-family:'Share Tech Mono',monospace; font-size:12px; resize:vertical;"></textarea>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitBugReport()" style="margin-top:8px;">📤 TRIMITE RAPORT</button>
+      <div id="bug-submit-msg" style="display:none; margin-top:10px; padding:10px; border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:12px;"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title" style="justify-content:space-between; display:flex;">
+        <span>Rapoarte Primite</span>
+        <button class="btn btn-primary" onclick="loadBugReports()" style="padding:4px 12px; font-size:10px;">↻ REFRESH</button>
+      </div>
+      <div id="bug-reports-list" style="overflow-y:auto; max-height:600px;">
+        <div style="color:var(--text3); font-family:'Share Tech Mono',monospace; font-size:12px; text-align:center; padding:20px;">
+          Niciun raport...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── SOCKET.IO ──
+const socket = io();
+let spectrumChart = null;
+let scanAutoCaptures = 0;
+
+socket.on('connect',    () => log('Conectat la server', 'info'));
+socket.on('disconnect', () => log('Deconectat de la server', 'err'));
+
+socket.on('device_status', data => {
+  document.getElementById('status-dot').className  = 'status-dot ' + (data.connected ? 'online' : 'offline');
+  document.getElementById('status-text').textContent = data.connected ? 'RTL-SDR Online' : 'Device not detected';
+});
+
+socket.on('capture_started', data => {
+  const el = document.getElementById('iq-status');
+  el.innerHTML = `<span class="running-dot"></span>Captură ${data.type.toUpperCase()} în desfășurare...`;
+  el.style.color = 'var(--green)';
+  log(`Captură ${data.type} pornită`, 'info');
+  document.getElementById('btn-iq-start').disabled = true;
+});
+
+socket.on('capture_done', data => {
+  const el = document.getElementById('iq-status');
+  if (data.success) {
+    el.innerHTML = `✓ Captură finalizată: <strong>${data.filename}</strong><br>Size: ${fmtSize(data.size_bytes)}`;
+    el.style.color = 'var(--green)';
+    log(`Captură salvată: ${data.filename}`, 'ok');
+  } else {
+    el.innerHTML = `✗ Eroare: ${data.error}`;
+    el.style.color = 'var(--red)';
+    log(`Eroare captură: ${data.error}`, 'err');
+  }
+  document.getElementById('btn-iq-start').disabled = false;
+});
+
+socket.on('scan_data', data => {
+  if (data.points && data.points.length > 0) updateSpectrum(data.points);
+});
+
+socket.on('scan_stopped', () => {
+  document.getElementById('scan-status-val').textContent = 'OPRIT';
+  document.getElementById('scan-status-val').style.color  = 'var(--red)';
+  document.getElementById('btn-scan-start').disabled = false;
+  document.getElementById('btn-scan-stop').disabled  = true;
+  log('Band scan oprit', 'warn');
+});
+
+socket.on('scan_error', data => log('Scan error: ' + data.message, 'err'));
+
+let cooldownTimer = null;
+
+socket.on('threshold_triggered', data => {
+  const tlog = document.getElementById('trigger-log');
+  const now  = new Date().toLocaleTimeString('ro-RO');
+
+  document.getElementById('last-trigger-box').style.display = 'block';
+  document.getElementById('last-freq').textContent = data.freq_label;
+  document.getElementById('last-db').textContent   = data.db + ' dB';
+  document.getElementById('last-time').textContent = now;
+
+  if (data.ignored) {
+    tlog.innerHTML = `<div style="color:var(--orange)">[${now}] IGNORAT (cooldown ${data.cooldown_remaining}s): ${data.freq_label} @ ${data.db} dB</div>` + tlog.innerHTML;
+  } else {
+    document.getElementById('trigger-alert-body').innerHTML =
+      `Frecvență: <strong>${data.freq_label}</strong><br>Nivel: <strong style="color:var(--red)">${data.db} dB</strong> (prag: ${data.threshold} dB)<br>Captură IQ pornită automat...`;
+    const alertEl = document.getElementById('trigger-alert');
+    alertEl.style.display = 'block';
+    setTimeout(() => { alertEl.style.display = 'none'; }, 6000);
+
+    tlog.innerHTML = `<div style="color:var(--red)">[${now}] TRIGGER: ${data.freq_label} @ ${data.db} dB</div>` + tlog.innerHTML;
+    log(`TRIGGER: ${data.freq_label} @ ${data.db} dB`, 'warn');
+
+    const cooldownTotal = parseFloat(document.getElementById('sc-cooldown').value) || 30;
+    let remaining = cooldownTotal;
+    const indicator   = document.getElementById('cooldown-indicator');
+    const remainingEl = document.getElementById('cooldown-remaining');
+    const bar         = document.getElementById('cooldown-bar');
+    indicator.style.display = 'block';
+    remainingEl.textContent = remaining;
+    bar.style.width = '100%';
+
+    if (cooldownTimer) clearInterval(cooldownTimer);
+    cooldownTimer = setInterval(() => {
+      remaining--;
+      remainingEl.textContent = remaining;
+      bar.style.width = (remaining / cooldownTotal * 100) + '%';
+      if (remaining <= 0) {
+        clearInterval(cooldownTimer);
+        indicator.style.display = 'none';
+      }
+    }, 1000);
+  }
+});
+
+socket.on('auto_capture_done', data => {
+  scanAutoCaptures++;
+  document.getElementById('scan-captures').textContent = scanAutoCaptures;
+  log(`Captură auto: ${data.filename}`, 'ok');
+});
+
+socket.on('scheduled_capture_done', data => {
+  log(`Job ${data.job_id}: ${data.meta.filename || 'eroare'}`, data.meta.success ? 'ok' : 'err');
+  loadSchedules();
+});
+
+// ── CLOCK ──
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('ro-RO');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── SYSTEM STATS ──
+async function updateSystemStats() {
+  try {
+    const d = await fetch('/api/system/stats').then(r => r.json());
+    const cpuColor  = d.cpu_pct  > 90 ? 'var(--red)' : d.cpu_pct  > 70 ? 'var(--orange)' : 'var(--green)';
+    const ramColor  = d.ram_pct  > 90 ? 'var(--red)' : d.ram_pct  > 70 ? 'var(--orange)' : 'var(--green)';
+    const tempColor = d.cpu_temp > 80 ? 'var(--red)' : d.cpu_temp > 65 ? 'var(--orange)' : 'var(--green)';
+
+    const cpuText = document.getElementById('cpu-pct-text');
+    cpuText.textContent = d.cpu_pct + '%';
+    cpuText.style.color = cpuColor;
+    const cpuBar = document.getElementById('cpu-bar-fill');
+    cpuBar.style.width = d.cpu_pct + '%';
+    cpuBar.style.background = cpuColor;
+
+    const ramText = document.getElementById('ram-pct-text');
+    ramText.textContent = d.ram_pct + '%';
+    ramText.style.color = ramColor;
+    const ramBar = document.getElementById('ram-bar-fill');
+    ramBar.style.width = d.ram_pct + '%';
+    ramBar.style.background = ramColor;
+
+    if (d.cpu_temp !== null) {
+      const tempEl = document.getElementById('cpu-temp-text');
+      tempEl.textContent = d.cpu_temp + '°C';
+      tempEl.style.color = tempColor;
+    }
+  } catch(e) {
+    document.getElementById('cpu-pct-text').textContent = 'N/A';
+  }
+}
+updateSystemStats();
+setInterval(updateSystemStats, 5000);
+
+// ── DISK USAGE ──
+async function updateDiskUsage() {
+  try {
+    const d = await fetch('/api/disk/usage').then(r => r.json());
+    const pct   = d.percent_used;
+    const color = pct > 90 ? 'var(--red)' : pct > 70 ? 'var(--orange)' : 'var(--green)';
+
+    document.getElementById('disk-header-text').textContent = fmtSize(d.free) + ' liber';
+    document.getElementById('disk-header-pct').textContent  = pct + '%';
+    const headerBar = document.getElementById('disk-bar-fill');
+    headerBar.style.width      = pct + '%';
+    headerBar.style.background = color;
+
+    document.getElementById('disk-total').textContent    = fmtSize(d.total);
+    document.getElementById('disk-used').textContent     = fmtSize(d.used);
+    document.getElementById('disk-used-pct').textContent = pct + '% folosit';
+    document.getElementById('disk-free').textContent     = fmtSize(d.free);
+    document.getElementById('disk-captures').textContent = fmtSize(d.captures_size);
+    const fullBar = document.getElementById('disk-full-bar');
+    fullBar.style.width      = pct + '%';
+    fullBar.style.background = color;
+  } catch(e) {
+    document.getElementById('disk-header-text').textContent = 'N/A';
+  }
+}
+updateDiskUsage();
+setInterval(updateDiskUsage, 30000);
+
+// ── TABS ──
+function switchTab(name, event) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (event) event.currentTarget.classList.add('active');
+  if (name === 'captures') loadCaptures();
+  if (name === 'bugs')     loadBugReports();
+  if (name === 'schedule') loadSchedules();
+  if (name === 'scan')     initSpectrum();
+}
+
+// ── LOG ──
+function log(msg, type = '') {
+  const el   = document.getElementById('status-log');
+  const time = new Date().toLocaleTimeString('ro-RO');
+  const div  = document.createElement('div');
+  div.className = 'log-entry log-' + type;
+  div.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg">${msg}</span>`;
+  el.insertBefore(div, el.firstChild);
+  if (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+// ── IQ CAPTURE ──
+async function startIQCapture() {
+  const payload = {
+    frequency:   parseFloat(document.getElementById('iq-freq').value),
+    sample_rate: parseInt(document.getElementById('iq-srate').value),
+    duration:    parseFloat(document.getElementById('iq-dur').value),
+    gain:        document.getElementById('iq-gain').value,
+    label:       document.getElementById('iq-label').value
+  };
+  await fetch('/api/capture/iq', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+}
+
+// ── SWEEP ──
+async function startSweep() {
+  const payload = {
+    start_freq:   parseFloat(document.getElementById('sw-start').value),
+    stop_freq:    parseFloat(document.getElementById('sw-stop').value),
+    bin_size:     parseInt(document.getElementById('sw-bin').value),
+    gain:         document.getElementById('sw-gain').value,
+    label:        document.getElementById('sw-label').value,
+    duration_sec: parseFloat(document.getElementById('sw-duration').value) || 0
+  };
+  await fetch('/api/capture/sweep', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  log('Sweep pornit...', 'info');
+}
+
+function setPreset(start, stop, name) {
+  document.getElementById('sw-start').value = start;
+  document.getElementById('sw-stop').value  = stop;
+  document.getElementById('sw-label').value = name;
+}
+
+// ── SPECTRUM ──
+function initSpectrum() {
+  if (spectrumChart) return;
+  const ctx = document.getElementById('spectrumChart').getContext('2d');
+  spectrumChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'dB',
+          data: [],
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,0.05)',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Peak',
+          data: [],
+          borderColor: 'rgba(0,255,136,0.4)',
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderDash: [3, 3],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0a141e',
+          borderColor: '#1a3a5c',
+          borderWidth: 1,
+          titleColor: '#00d4ff',
+          bodyColor: '#c8e8ff',
+          callbacks: {
+            title: ctx => fmtFreq(ctx[0].parsed.x),
+            label: ctx => `${ctx.parsed.y.toFixed(1)} dB`
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          grid: { color: 'rgba(0,212,255,0.05)' },
+          ticks: { color: '#3a6a8a', font: { family: 'Share Tech Mono', size: 10 }, callback: v => fmtFreq(v) }
+        },
+        y: {
+          grid: { color: 'rgba(0,212,255,0.05)' },
+          ticks: { color: '#3a6a8a', font: { family: 'Share Tech Mono', size: 10 }, callback: v => v + ' dB' }
+        }
+      }
+    }
+  });
+}
+
+let peakData = {};
+
+function updateSpectrum(points) {
+  if (!spectrumChart) return;
+  const labels = points.map(p => p.freq_hz);
+  const values = points.map(p => p.db);
+
+  points.forEach(p => {
+    if (!peakData[p.freq_hz] || p.db > peakData[p.freq_hz]) peakData[p.freq_hz] = p.db;
+  });
+
+  spectrumChart.data.labels            = labels;
+  spectrumChart.data.datasets[0].data  = values;
+  spectrumChart.data.datasets[1].data  = labels.map(f => peakData[f] || null);
+  spectrumChart.update('none');
+
+  const maxDb  = Math.max(...values);
+  const maxIdx = values.indexOf(maxDb);
+  document.getElementById('scan-peak').textContent      = maxDb.toFixed(1);
+  document.getElementById('scan-peak-freq').textContent = fmtFreq(labels[maxIdx]);
+
+  const threshold = parseFloat(document.getElementById('sc-threshold').value);
+  document.getElementById('scan-peak').classList.toggle('alert', maxDb >= threshold);
+}
+
+async function startScan() {
+  const payload = {
+    start_freq:       parseFloat(document.getElementById('sc-start').value),
+    stop_freq:        parseFloat(document.getElementById('sc-stop').value),
+    bin_size:         parseInt(document.getElementById('sc-bin').value),
+    gain:             document.getElementById('sc-gain').value,
+    threshold_db:     parseFloat(document.getElementById('sc-threshold').value),
+    capture_duration: parseFloat(document.getElementById('sc-cap-dur').value),
+    cooldown_sec:     parseFloat(document.getElementById('sc-cooldown').value)
+  };
+  peakData = {};
+  initSpectrum();
+  await fetch('/api/scan/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  document.getElementById('scan-status-val').textContent = 'ACTIV';
+  document.getElementById('scan-status-val').style.color = 'var(--green)';
+  document.getElementById('btn-scan-start').disabled = true;
+  document.getElementById('btn-scan-stop').disabled  = false;
+  log('Band scan pornit', 'info');
+}
+
+async function stopScan() {
+  await fetch('/api/scan/stop', { method: 'POST' });
+}
+
+// ── SCHEDULE ──
+function updateSchedForm() {
+  const t = document.getElementById('sched-type').value;
+  document.getElementById('sched-iq-fields').style.display    = t === 'iq'    ? 'block' : 'none';
+  document.getElementById('sched-sweep-fields').style.display = t === 'sweep' ? 'block' : 'none';
+}
+
+async function addSchedule() {
+  const type   = document.getElementById('sched-type').value;
+  const params = type === 'iq' ? {
+    frequency:   parseFloat(document.getElementById('sched-freq').value),
+    duration:    parseFloat(document.getElementById('sched-dur').value),
+    sample_rate: parseInt(document.getElementById('sched-srate').value),
+    gain:        document.getElementById('sched-gain').value
+  } : {
+    start_freq:   parseFloat(document.getElementById('sched-sw-start').value),
+    stop_freq:    parseFloat(document.getElementById('sched-sw-stop').value),
+    duration_sec: parseFloat(document.getElementById('sched-sw-dur').value),
+    bin_size:     parseInt(document.getElementById('sched-sw-bin').value),
+    gain:         document.getElementById('sched-sw-gain').value
+  };
+
+  const res  = await fetch('/api/schedule/add', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ cron: document.getElementById('sched-cron').value, capture_type: type, params })
+  });
+  const data = await res.json();
+  if (data.error) { log('Eroare: ' + data.error, 'err'); return; }
+  log(`Job adăugat: ${data.job_id}, următor run: ${data.next_run}`, 'ok');
+  loadSchedules();
+}
+
+async function loadSchedules() {
+  const jobs = await fetch('/api/schedule/list').then(r => r.json());
+  const cont = document.getElementById('schedule-list');
+  if (!jobs.length) {
+    cont.innerHTML = '<div style="color:var(--text3); font-family:\'Share Tech Mono\',monospace; font-size:12px; padding:20px; text-align:center;">Nicio sarcină programată</div>';
+    return;
+  }
+  cont.innerHTML = `
+    <table class="schedule-table">
+      <thead><tr><th>ID</th><th>Cron</th><th>Tip</th><th>Frecvență/Band</th><th>Următor Run</th><th></th></tr></thead>
+      <tbody>${jobs.map(j => `
+        <tr>
+          <td>${j.id}</td>
+          <td><code style="color:var(--accent)">${j.cron}</code></td>
+          <td><span class="badge ${j.capture_type === 'iq' ? 'badge-iq' : 'badge-sweep'}">${j.capture_type}</span></td>
+          <td style="font-size:11px">${j.capture_type === 'iq' ? fmtFreq(j.params.frequency) : fmtFreq(j.params.start_freq) + ' – ' + fmtFreq(j.params.stop_freq)}</td>
+          <td style="font-size:11px; color:var(--text3)">${j.next_run ? j.next_run.replace(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2}:\d{2}).*/, '$3.$2.$1 $4') : 'N/A'}</td>
+          <td><button class="btn btn-danger" onclick="removeSchedule('${j.id}')" style="padding:4px 10px; font-size:10px;">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function removeSchedule(id) {
+  await fetch('/api/schedule/remove/' + id, { method: 'DELETE' });
+  log(`Job ${id} șters`, 'warn');
+  loadSchedules();
+}
+
+// ── BUG REPORTS ──
+async function submitBugReport() {
+  const desc = document.getElementById('bug-description').value.trim();
+  if (!desc) { showBugMsg('Descrierea este obligatorie!', false); return; }
+
+  const payload = {
+    name:        document.getElementById('bug-name').value.trim(),
+    category:    document.getElementById('bug-category').value,
+    severity:    document.getElementById('bug-severity').value,
+    description: desc,
+    steps:       document.getElementById('bug-steps').value.trim()
+  };
+
+  try {
+    const data = await fetch('/api/bugreports/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+
+    if (data.status === 'ok') {
+      showBugMsg('✓ Raport trimis! ID: ' + data.id, true);
+      document.getElementById('bug-description').value = '';
+      document.getElementById('bug-steps').value       = '';
+      document.getElementById('bug-name').value        = '';
+      loadBugReports();
+    }
+  } catch(e) {
+    showBugMsg('Eroare la trimitere: ' + e.message, false);
+  }
+}
+
+function showBugMsg(msg, ok) {
+  const el = document.getElementById('bug-submit-msg');
+  el.style.display    = 'block';
+  el.style.background = ok ? 'rgba(0,255,136,0.1)' : 'rgba(255,51,85,0.1)';
+  el.style.border     = '1px solid ' + (ok ? 'var(--green)' : 'var(--red)');
+  el.style.color      = ok ? 'var(--green)' : 'var(--red)';
+  el.textContent      = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+const severityLabel = { low: 'Mică', medium: 'Medie', high: 'Mare' };
+const categoryLabel = { ui: 'UI', capture: 'IQ Capture', sweep: 'Sweep', scan: 'Band Scan', schedule: 'Schedule', device: 'Dispozitiv', other: 'Altele' };
+
+async function loadBugReports() {
+  try {
+    const reports   = await fetch('/api/bugreports/list').then(r => r.json());
+    const container = document.getElementById('bug-reports-list');
+    if (!reports.length) {
+      container.innerHTML = '<div style="color:var(--text3); font-family:\'Share Tech Mono\',monospace; font-size:12px; text-align:center; padding:20px;">Niciun raport...</div>';
+      return;
+    }
+    container.innerHTML = reports.map(r => `
+      <div class="report-card" style="background:var(--bg); border:1px solid var(--border2); border-radius:6px; padding:12px; margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--accent);">#${r.id}</span>
+          <span style="font-size:11px; color:var(--text3);">${r.timestamp}</span>
+          <button onclick="deleteBugReport('${r.id}')" style="background:none; border:1px solid var(--red); border-radius:3px; color:var(--red); cursor:pointer; padding:2px 6px; font-size:10px;">✕</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap;">
+          <span class="badge badge-iq">${categoryLabel[r.category] || r.category}</span>
+          <span class="badge"         style="background:var(--panel2); color:var(--text2);">${severityLabel[r.severity] || r.severity}</span>
+          ${r.name ? `<span class="badge" style="background:var(--panel2); color:var(--text3);">👤 ${r.name}</span>` : ''}
+        </div>
+        <div style="font-size:12px; color:var(--text); margin-bottom:4px;">${r.description}</div>
+        ${r.steps ? `<div style="font-size:11px; color:var(--text3); margin-top:4px; white-space:pre-line;">${r.steps}</div>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    console.error('loadBugReports error:', e);
+  }
+}
+
+async function deleteBugReport(id) {
+  await fetch('/api/bugreports/delete/' + id, { method: 'DELETE' });
+  loadBugReports();
+}
+
+// ── CAPTURES ──
+async function loadCaptures() {
+  const captures = await fetch('/api/captures/list').then(r => r.json());
+  const tbody    = document.getElementById('captures-tbody');
+  if (!captures.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text3);">Nicio captură salvată</td></tr>';
+    return;
+  }
+  tbody.innerHTML = captures.map(c => `
+    <tr>
+      <td>${c.timestamp || '-'}</td>
+      <td><span class="badge ${c.type === 'iq' ? 'badge-iq' : 'badge-sweep'}">${c.type || '-'}</span></td>
+      <td>${c.frequency_label || (fmtFreq(c.start_freq) + ' – ' + fmtFreq(c.stop_freq)) || '-'}</td>
+      <td>${c.duration ? c.duration + 's' : '-'}</td>
+      <td>${c.sample_rate ? (c.sample_rate / 1e6).toFixed(3) + ' MHz' : '-'}</td>
+      <td>${c.gain || '-'}</td>
+      <td style="color:var(--text3); font-size:11px;">${c.label || '-'}</td>
+      <td>${fmtSize(c.size_bytes)}</td>
+      <td><span class="badge ${c.success ? 'badge-ok' : 'badge-fail'}">${c.success ? 'OK' : 'FAIL'}</span></td>
+      <td style="display:flex; gap:6px;">
+        <a href="/api/captures/download/${c.filename}" class="btn btn-primary" style="padding:4px 10px; font-size:10px; text-decoration:none;">↓</a>
+        <button class="btn btn-danger" onclick="deleteCapture('${c.id}')" style="padding:4px 10px; font-size:10px;">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function deleteCapture(id) {
+  if (!confirm('Ștergi această captură?')) return;
+  await fetch('/api/captures/delete/' + id, { method: 'DELETE' });
+  loadCaptures();
+}
+
+// ── UTILS ──
+function fmtFreq(hz) {
+  if (!hz) return '-';
+  if (hz >= 1e9) return (hz / 1e9).toFixed(3) + ' GHz';
+  if (hz >= 1e6) return (hz / 1e6).toFixed(3) + ' MHz';
+  if (hz >= 1e3) return (hz / 1e3).toFixed(1) + ' kHz';
+  return hz + ' Hz';
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '-';
+  if (bytes >= 1e9) return (bytes / 1e9).toFixed(2) + ' GB';
+  if (bytes >= 1e6) return (bytes / 1e6).toFixed(1) + ' MB';
+  if (bytes >= 1e3) return (bytes / 1e3).toFixed(0) + ' KB';
+  return bytes + ' B';
+}
+
+log('RTL-SDR Control System pornit', 'info');
+</script>
+</body>
+</html>
